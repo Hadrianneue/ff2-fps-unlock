@@ -7,7 +7,7 @@ Simple ASI plugin to change the framerate in the demo.
   https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases
 
 ## Installation
-1. Place `dinput8.dll`, `FatalFrameUnlocker.dll`, and `FatalFrameUnlocker.ini` next to the game `.exe`.
+1. Place `dinput8.dll`, `FatalFrameUnlocker.asi`(rename it), and `FatalFrameUnlocker.ini` next to the game `.exe`.
 2. Launch the game.
 
 ## Configuration
