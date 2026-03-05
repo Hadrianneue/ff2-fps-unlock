@@ -17,14 +17,14 @@ DWORD WINAPI Init(LPVOID p) {
     int fps = GetPrivateProfileIntA("Settings", "FPS", 60, ini.c_str());
     uintptr_t base = (uintptr_t)GetModuleHandleA(NULL);
 
-    while (*(int*)(base + 0x6FC562C) == 0) {
-        SwitchToThread();
+    while (true) {
+        if (*(int*)(base + 0x6FC562C) != fps) {
+            Patch(base + 0x6FC562C, fps);
+            Patch(base + 0x6FC5624, fps);
+        }
+        Sleep(100);
     }
 
-    Patch(base + 0x6FC562C, fps);
-    Patch(base + 0x6FC5624, fps);
-
-    FreeLibraryAndExitThread((HMODULE)p, 0);
     return 0;
 }
 
