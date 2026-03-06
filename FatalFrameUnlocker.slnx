@@ -3,7 +3,7 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="FatalFrameUnlocker.vcxproj">
+  <Project Path="FatalFrameUnlocker.vcxproj" Id="b26dec95-3950-49e8-8254-e5d6468141d0">
     <BuildType Solution="Debug|x64" Project="Release" />
   </Project>
 </Solution>

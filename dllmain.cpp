@@ -1,37 +1,43 @@
 #include <windows.h>
 #include <string>
 
-void Patch(uintptr_t a, int v) {
-    DWORD p;
-    VirtualProtect((void*)a, 4, 0x40, &p);
-    *(int*)a = v;
-    VirtualProtect((void*)a, 4, p, &p);
+void PatchInt(uintptr_t address, int value) {
+    DWORD oldProtect;
+    VirtualProtect(reinterpret_cast<void*>(address), sizeof(int), PAGE_EXECUTE_READWRITE, &oldProtect);
+    *reinterpret_cast<int*>(address) = value;
+    VirtualProtect(reinterpret_cast<void*>(address), sizeof(int), oldProtect, &oldProtect);
 }
 
-DWORD WINAPI Init(LPVOID p) {
-    char path[260];
-    GetModuleFileNameA((HMODULE)p, path, 260);
-    std::string ini = path;
-    ini = ini.substr(0, ini.find_last_of('.')) + ".ini";
+DWORD WINAPI MainThread(LPVOID lpParam) {
+    HMODULE hModule = static_cast<HMODULE>(lpParam);
+    char modulePath[MAX_PATH];
+    GetModuleFileNameA(hModule, modulePath, MAX_PATH);
 
-    int fps = GetPrivateProfileIntA("Settings", "FPS", 60, ini.c_str());
-    uintptr_t base = (uintptr_t)GetModuleHandleA(NULL);
-
-    while (true) {
-        if (*(int*)(base + 0x6FC562C) != fps) {
-            Patch(base + 0x6FC562C, fps);
-            Patch(base + 0x6FC5624, fps);
-        }
-        Sleep(100);
+    std::string iniPath = modulePath;
+    size_t lastDot = iniPath.find_last_of(".");
+    if (lastDot != std::string::npos) {
+        iniPath = iniPath.substr(0, lastDot) + ".ini";
     }
 
+    int desiredFPS = GetPrivateProfileIntA("Settings", "FPS", 60, iniPath.c_str());
+
+    Sleep(15000);
+
+    uintptr_t moduleBase = reinterpret_cast<uintptr_t>(GetModuleHandle(NULL));
+
+    if (moduleBase) {
+        PatchInt(moduleBase + 0x6FC562C, desiredFPS);
+        PatchInt(moduleBase + 0x6FC5624, desiredFPS);
+    }
+
+    FreeLibraryAndExitThread(hModule, 0);
     return 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE h, DWORD r, LPVOID res) {
-    if (r == 1) {
-        DisableThreadLibraryCalls(h);
-        CreateThread(0, 0, Init, h, 0, 0);
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
+        DisableThreadLibraryCalls(hModule);
+        CreateThread(nullptr, 0, MainThread, hModule, 0, nullptr);
     }
-    return 1;
+    return TRUE;
 }
